@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programme Pecs & Bras Interactif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Librairie pour l'export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .progress-bar-fill {
+            transition: width 0.3s ease-in-out;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        textarea::placeholder {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4 sm:p-6 md:p-8">
+
+    <div class="max-w-2xl mx-auto">
+
+        <!-- En-tÃªte -->
+        <header class="text-center mb-8 fade-in">
+            <h1 class="text-3xl sm:text-4xl font-bold text-cyan-400">Programme Pecs & Bras</h1>
+            <p class="text-gray-400 mt-2">Suivez votre progression sÃ©ance par sÃ©ance.</p>
+        </header>
+
+        <!-- SÃ©lecteur de sÃ©ance -->
+        <div class="mb-8 fade-in" style="animation-delay: 0.1s;">
+            <label for="session-select" class="block text-sm font-medium text-gray-300 mb-2">Choisir votre sÃ©ance :</label>
+            <div class="relative">
+                <select id="session-select" class="block w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-3 appearance-none focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    <option value="seance1">SÃ©ance 1 - Pecs lourds + triceps</option>
+                    <option value="seance2">SÃ©ance 2 - Bras focus (biceps/triceps)</option>
+                    <option value="seance3">SÃ©ance 3 - Pecs volume + rappel dos/Ã©paules</option>
+                    <option value="seance4">SÃ©ance 4 - Jambes/Mollets</option>
+                    <option value="seance5">SÃ©ance 5 - Bras volume</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Barre de progression -->
+        <div class="mb-8 fade-in" style="animation-delay: 0.2s;">
+             <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-300">Progression</span>
+                <span id="progress-text" class="text-sm font-bold text-cyan-400">0%</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2.5">
+                <div id="progress-bar" class="bg-cyan-500 h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Conteneur des exercices -->
+        <main id="workout-container" class="space-y-4">
+            <!-- Les exercices seront injectÃ©s ici par JavaScript -->
+        </main>
+        
+        <!-- Message de fÃ©licitations -->
+        <div id="completion-message" class="hidden text-center bg-green-900/50 border border-green-500 p-6 rounded-lg mt-8 fade-in">
+             <i class="fas fa-trophy text-4xl text-yellow-400 mb-4"></i>
+             <h2 class="text-2xl font-bold">SÃ©ance terminÃ©e !</h2>
+             <p class="text-green-300 mt-2">Excellent travail ! Reposez-vous bien.</p>
+        </div>
+
+
+        <!-- Boutons d'action -->
+        <div class="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4 fade-in" style="animation-delay: 0.3s;">
+            <button id="export-button" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300">
+                <i class="fas fa-file-excel mr-2"></i>Exporter (CSV)
+            </button>
+            <button id="reset-button" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300">
+                <i class="fas fa-sync-alt mr-2"></i>RÃ©initialiser la sÃ©ance
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const workoutData = {
+            seance1: {
+                title: "SÃ©ance 1 - Pecs lourds + triceps",
+                exercises: [
+                    { name: "DÃ©veloppÃ© couchÃ© barre", sets: 4, reps: "6-8", rest: "2'00\"", videoUrl: "https://www.youtube.com/watch?v=z_5P4K3f5yE" },
+                    { name: "DÃ©veloppÃ© inclinÃ© haltÃ¨res", sets: 4, reps: "8-10", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=3-E7st9-gqc" },
+                    { name: "Dips lestÃ©s (buste penchÃ©)", sets: 4, reps: "8-12", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=fM3v14t_LwA" },
+                    { name: "ÃcartÃ©s poulie", sets: 3, reps: "12-15", rest: "1'30\"", videoUrl: "https://www.youtube.com/watch?v=tizd5S5q8Qo" },
+                    { name: "Barre au front (skull crusher)", sets: 3, reps: "10-12", rest: "1'30\"", videoUrl: "https://www.youtube.com/watch?v=PlhN-awQ3Kw" },
+                    { name: "Extension corde triceps", sets: 3, reps: "12-15", rest: "1'15\"", videoUrl: "https://www.youtube.com/watch?v=Yn9pDHGg_gE" }
+                ]
+            },
+            seance2: {
+                title: "SÃ©ance 2 - Bras focus (biceps/triceps)",
+                exercises: [
+                    { name: "Tractions supination lestÃ©es", sets: 4, reps: "6-10", rest: "2'00\"", videoUrl: "https://www.youtube.com/watch?v=Ue2sY1tu-Dk" },
+                    { name: "Curl barre EZ", sets: 4, reps: "8-10", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=wzLiYp_2_a4" },
+                    { name: "Curl inclinÃ©", sets: 3, reps: "10-12", rest: "1'30\"", videoUrl: "https://www.youtube.com/watch?v=wO2K2nQYJ3Q" },
+                    { name: "Dips prise serrÃ©e (triceps)", sets: 4, reps: "8-12", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=t-0y7o5_TGU" },
+                    { name: "Extension haltÃ¨re derriÃ¨re la tÃªte", sets: 3, reps: "10-12", rest: "1'30\"", videoUrl: "https://www.youtube.com/watch?v=n5s5gSQ9o-I" },
+                    { name: "Curl marteau", sets: 3, reps: "12-15", rest: "1'15\"", videoUrl: "https://www.youtube.com/watch?v=VzZg3gaIe3E" }
+                ]
+            },
+            seance3: {
+                title: "SÃ©ance 3 - Pecs volume + rappel dos/Ã©paules",
+                exercises: [
+                    { name: "DÃ©veloppÃ© dÃ©clinÃ© haltÃ¨res", sets: 4, reps: "8-10", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=4y3qJ3yzzA0" },
+                    { name: "DÃ©veloppÃ© inclinÃ© machine ou smith", sets: 4, reps: "10-12", rest: "1'30\"", videoUrl: "https://www.youtube.com/watch?v=dJa_Nf4192I" },
+                    { name: "Pompes lestÃ©es / poids du corps", sets: 3, reps: "max", rest: "1'30\"", videoUrl: "https://www.youtube.com/watch?v=u8-hL5-OoHY" },
+                    { name: "ÃcartÃ©s poulie haute", sets: 3, reps: "15-20", rest: "1'15\"", videoUrl: "https://www.youtube.com/watch?v=hGMMfr6E-GY" },
+                    { name: "Rowing barre", sets: 3, reps: "8-10", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=px-kKz-a0-A" },
+                    { name: "ÃlÃ©vations latÃ©rales", sets: 3, reps: "12-15", rest: "1'15\"", videoUrl: "https://www.youtube.com/watch?v=--A2u4b6YyM" }
+                ]
+            },
+            seance4: {
+                title: "SÃ©ance 4 - Jambes/Mollets",
+                exercises: [
+                    { name: "Squat", sets: 4, reps: "8-12", rest: "2'00\"", videoUrl: "https://www.youtube.com/watch?v=bEv6CCg2BC8" },
+                    { name: "Fentes bulgares", sets: 4, reps: "8-12", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=r_sPU-2nXaM" },
+                    { name: "Leg extension", sets: 4, reps: "8-12", rest: "1'30\"", videoUrl: "https://www.youtube.com/watch?v=CkkUchS4aw8" },
+                    { name: "Leg curl", sets: 4, reps: "12-15", rest: "1'30\"", videoUrl: "https://www.youtube.com/watch?v=qB4wSAc_o_o" },
+                    { name: "SoulevÃ© de terre genou lÃ©gÃ¨rement pliÃ©", sets: 4, reps: "12-15", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=x-A8pAD-dGg" },
+                    { name: "Mollets", sets: 3, reps: "12-15", rest: "1'15\"", videoUrl: "https://www.youtube.com/watch?v=6oe3o0w-xqs" }
+                ]
+            },
+            seance5: {
+                title: "SÃ©ance 5 - Bras volume",
+                exercises: [
+                    { name: "Curl barre droite", sets: 4, reps: "8-10", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=yYzI7xi4mfI" },
+                    { name: "Curl concentration", sets: 3, reps: "12-15", rest: "1'15\"", videoUrl: "https://www.youtube.com/watch?v=PIJ9nJb-Tx0" },
+                    { name: "Curl pupitre", sets: 3, reps: "10-12", rest: "1'30\"", videoUrl: "https://www.youtube.com/watch?v=0xH-o33_28A" },
+                    { name: "DÃ©veloppÃ© couchÃ© prise serrÃ©e", sets: 4, reps: "8-10", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=A-nHY5i1TsA" },
+                    { name: "Dips lestÃ©s triceps", sets: 4, reps: "8-12", rest: "1'45\"", videoUrl: "https://www.youtube.com/watch?v=t-0y7o5_TGU" },
+                    { name: "Extension corde haute rep", sets: 3, reps: "15-20", rest: "1'15\"", videoUrl: "https://www.youtube.com/watch?v=Yn9pDHGg_gE" }
+                ]
+            }
+        };
+
+        const sessionSelect = document.getElementById('session-select');
+        const workoutContainer = document.getElementById('workout-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const completionMessage = document.getElementById('completion-message');
+        const resetButton = document.getElementById('reset-button');
+        const exportButton = document.getElementById('export-button');
+
+        function renderWorkout(sessionId) {
+            const workout = workoutData[sessionId];
+            workoutContainer.innerHTML = '';
+            completionMessage.classList.add('hidden');
+            
+            workout.exercises.forEach((exercise, index) => {
+                const notesId = `${sessionId}-${index}-notes`;
+                const savedNotes = localStorage.getItem(notesId) || '';
+
+                const exerciseCard = document.createElement('div');
+                exerciseCard.className = 'bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700 fade-in';
+                exerciseCard.style.animationDelay = `${index * 0.05}s`;
+
+                let setsHtml = '';
+                for (let i = 1; i <= exercise.sets; i++) {
+                    const checkboxId = `${sessionId}-${index}-${i}`;
+                    const isChecked = localStorage.getItem(checkboxId) === 'true';
+                    setsHtml += `
+                        <label for="${checkboxId}" class="flex items-center justify-center w-12 h-12 bg-gray-700 rounded-md cursor-pointer transition-colors duration-200 ${isChecked ? 'bg-cyan-600' : 'hover:bg-gray-600'}">
+                            <input type="checkbox" id="${checkboxId}" class="hidden" data-session="${sessionId}" ${isChecked ? 'checked' : ''}>
+                            <span class="text-lg font-semibold">${i}</span>
+                        </label>
+                    `;
+                }
+
+                exerciseCard.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-white">${exercise.name}</h3>
+                        <span class="flex-shrink-0 text-sm font-medium bg-cyan-800/50 text-cyan-300 px-3 py-1 rounded-full">${exercise.sets} x ${exercise.reps}</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-4">
+                         <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-400"><i class="fas fa-clock mr-1 text-cyan-400"></i> Repos: ${exercise.rest}</span>
+                             <a href="${exercise.videoUrl}" target="_blank" rel="noopener noreferrer" class="text-sm text-gray-400 hover:text-cyan-400 transition-colors duration-200">
+                                <i class="fas fa-video mr-1 text-cyan-400"></i> Voir vidÃ©o
+                            </a>
+                        </div>
+                    </div>
+                     <div class="mb-4">
+                        <textarea id="${notesId}" data-session="${sessionId}" data-index="${index}" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500" rows="2" placeholder="Poids & Notes...">${savedNotes}</textarea>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        ${setsHtml}
+                    </div>
+                `;
+                workoutContainer.appendChild(exerciseCard);
+            });
+            updateProgress(sessionId);
+        }
+
+        function updateProgress(sessionId) {
+            const checkboxes = document.querySelectorAll(`#workout-container input[type="checkbox"][data-session="${sessionId}"]`);
+            const checkedCheckboxes = document.querySelectorAll(`#workout-container input[type="checkbox"][data-session="${sessionId}"]:checked`);
+            
+            const total = checkboxes.length;
+            const checkedCount = checkedCheckboxes.length;
+            const percentage = total > 0 ? Math.round((checkedCount / total) * 100) : 0;
+            
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${percentage}%`;
+
+            completionMessage.classList.toggle('hidden', percentage !== 100 || total === 0);
+        }
+        
+        function handleInteraction(e) {
+            const target = e.target;
+            if (target.matches('input[type="checkbox"]')) {
+                const checkbox = target;
+                localStorage.setItem(checkbox.id, checkbox.checked);
+                checkbox.parentElement.classList.toggle('bg-cyan-600', checkbox.checked);
+                checkbox.parentElement.classList.toggle('bg-gray-700', !checkbox.checked);
+                updateProgress(checkbox.dataset.session);
+            }
+            if (target.matches('textarea')) {
+                 localStorage.setItem(target.id, target.value);
+            }
+        }
+
+        function resetSession(sessionId) {
+            const elements = document.querySelectorAll(`#workout-container [data-session="${sessionId}"]`);
+            elements.forEach(el => {
+                if(el.type === 'checkbox') {
+                    el.checked = false;
+                    localStorage.removeItem(el.id);
+                    el.parentElement.classList.remove('bg-cyan-600');
+                    el.parentElement.classList.add('bg-gray-700');
+                } else if (el.tagName === 'TEXTAREA') {
+                    el.value = '';
+                    localStorage.removeItem(el.id);
+                }
+            });
+            updateProgress(sessionId);
+        }
+
+        function exportToCsv() {
+            const sessionId = sessionSelect.value;
+            const workout = workoutData[sessionId];
+            const dataForExport = [
+                ['Exercice', 'SÃ©ries', 'RÃ©pÃ©titions', 'Repos', 'Poids / Notes']
+            ];
+
+            workout.exercises.forEach((exercise, index) => {
+                const notesId = `${sessionId}-${index}-notes`;
+                const notes = localStorage.getItem(notesId) || 'N/A';
+                dataForExport.push([
+                    exercise.name,
+                    exercise.sets,
+                    exercise.reps,
+                    exercise.rest,
+                    notes
+                ]);
+            });
+
+            const worksheet = XLSX.utils.aoa_to_sheet(dataForExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "SÃ©ance");
+            
+            const today = new Date().toISOString().slice(0, 10);
+            const fileName = `Seance_${sessionId}_${today}.xlsx`;
+
+            XLSX.writeFile(workbook, fileName);
+        }
+
+
+        sessionSelect.addEventListener('change', () => renderWorkout(sessionSelect.value));
+        workoutContainer.addEventListener('change', handleInteraction);
+        workoutContainer.addEventListener('input', handleInteraction);
+        resetButton.addEventListener('click', () => resetSession(sessionSelect.value));
+        exportButton.addEventListener('click', exportToCsv);
+
+        document.addEventListener('DOMContentLoaded', () => renderWorkout(sessionSelect.value));
+
+    </script>
+</body>
+</html>
